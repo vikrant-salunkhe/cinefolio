@@ -1,66 +1,295 @@
-import mockMovies from '../data/movies.js';
+import initialMovies from '../data/movies.js';
 
 /**
- * Movie Service
- * ---------------------------------------------------------
- * Phase I uses an in-memory mock dataset so the app is fully
- * functional offline and doesn't depend on an external API key.
- *
- * Phase II plan: replace the bodies of these functions with real
- * fetch() calls to a provider such as OMDb or TMDB, e.g.:
- *
- *   const API_KEY = import.meta.env.VITE_OMDB_API_KEY;
- *   const res = await fetch(`https://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`);
- *   const data = await res.json();
- *
- * Keeping all data access behind this service means every component
- * in src/pages and src/components stays unaware of where the data
- * actually comes from, so switching to a live API later requires no
- * changes outside this file.
+ * Movie & Review Service (Phase II - Full CRUD & Local Storage Persistence)
+ * -------------------------------------------------------------------------
+ * Implements Create, Read, Update, and Delete operations for both
+ * movies and user reviews. Data is stored in localStorage so additions,
+ * updates, and deletions survive page refreshes.
  */
 
-const SIMULATED_LATENCY_MS = 250;
+const MOVIES_STORAGE_KEY = 'cinefolio_movies_v2';
+const REVIEWS_STORAGE_KEY = 'cinefolio_reviews_v1';
+const SIMULATED_LATENCY_MS = 150;
 
 function delay(value) {
   return new Promise((resolve) => setTimeout(() => resolve(value), SIMULATED_LATENCY_MS));
 }
 
+// Initial mock reviews to populate details right away
+const INITIAL_REVIEWS = [
+  {
+    id: 'rev-1',
+    movieId: 1,
+    author: 'Aarav Sharma',
+    rating: 9,
+    comment: 'Visually stunning space odyssey! The sound design and tension in the second act were brilliant.',
+    createdAt: '2026-09-12'
+  },
+  {
+    id: 'rev-2',
+    movieId: 1,
+    author: 'Pooja Kulkarni',
+    rating: 8,
+    comment: 'Great pacing and thought-provoking plot. A fresh take on modern sci-fi.',
+    createdAt: '2026-09-18'
+  },
+  {
+    id: 'rev-3',
+    movieId: 2,
+    author: 'Vikrant S.',
+    rating: 8,
+    comment: 'Warm, emotional storytelling with poetic visuals. Loved the score.',
+    createdAt: '2026-10-01'
+  }
+];
+
+// In-memory fallback for environments without window.localStorage (e.g. Node test runner)
+const memoryStore = {};
+
+function getStorageItem(key) {
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem(key);
+  }
+  return memoryStore[key] || null;
+}
+
+function setStorageItem(key, value) {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(key, value);
+  } else {
+    memoryStore[key] = value;
+  }
+}
+
+// Helper to read movies from storage
+function getStoredMovies() {
+  try {
+    const raw = getStorageItem(MOVIES_STORAGE_KEY);
+    if (!raw) {
+      setStorageItem(MOVIES_STORAGE_KEY, JSON.stringify(initialMovies));
+      return [...initialMovies];
+    }
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('Failed to read movies from storage', err);
+    return [...initialMovies];
+  }
+}
+
+function saveStoredMovies(movies) {
+  try {
+    setStorageItem(MOVIES_STORAGE_KEY, JSON.stringify(movies));
+  } catch (err) {
+    console.warn('Failed to save movies to storage', err);
+  }
+}
+
+// Helper to read reviews from storage
+function getStoredReviews() {
+  try {
+    const raw = getStorageItem(REVIEWS_STORAGE_KEY);
+    if (!raw) {
+      setStorageItem(REVIEWS_STORAGE_KEY, JSON.stringify(INITIAL_REVIEWS));
+      return [...INITIAL_REVIEWS];
+    }
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('Failed to read reviews from storage', err);
+    return [...INITIAL_REVIEWS];
+  }
+}
+
+function saveStoredReviews(reviews) {
+  try {
+    setStorageItem(REVIEWS_STORAGE_KEY, JSON.stringify(reviews));
+  } catch (err) {
+    console.warn('Failed to save reviews to storage', err);
+  }
+}
+
+/* -------------------------------------------------------------
+ * READ OPERATIONS
+ * ----------------------------------------------------------- */
+
 export async function getAllMovies() {
-  return delay([...mockMovies]);
+  const movies = getStoredMovies();
+  return delay(movies);
 }
 
 export async function getMovieById(id) {
-  const movie = mockMovies.find((m) => m.id === Number(id));
+  const movies = getStoredMovies();
+  const movie = movies.find((m) => String(m.id) === String(id));
   return delay(movie || null);
 }
 
-export async function searchMovies({ query = '', genre = 'All', sortBy = 'title' } = {}) {
-  let results = [...mockMovies];
+export async function getFeaturedMovie() {
+  const movies = getStoredMovies();
+  const featured = movies.find((m) => m.featured) || movies[0];
+  return delay(featured || null);
+}
+
+export async function searchMovies({
+  query = '',
+  genre = 'All',
+  sortBy = 'title',
+  minRating = 0
+} = {}) {
+  let list = getStoredMovies();
 
   if (query.trim()) {
     const q = query.trim().toLowerCase();
-    results = results.filter(
+    list = list.filter(
       (m) =>
         m.title.toLowerCase().includes(q) ||
-        m.director.toLowerCase().includes(q) ||
-        m.cast.some((actor) => actor.toLowerCase().includes(q))
+        (m.director && m.director.toLowerCase().includes(q)) ||
+        (Array.isArray(m.cast) && m.cast.some((actor) => actor.toLowerCase().includes(q))) ||
+        (m.synopsis && m.synopsis.toLowerCase().includes(q))
     );
   }
 
   if (genre && genre !== 'All') {
-    results = results.filter((m) => m.genres.includes(genre));
+    list = list.filter((m) => Array.isArray(m.genres) && m.genres.includes(genre));
   }
 
-  results.sort((a, b) => {
-    if (sortBy === 'rating') return b.rating - a.rating;
-    if (sortBy === 'year') return b.year - a.year;
+  if (minRating > 0) {
+    list = list.filter((m) => Number(m.rating) >= Number(minRating));
+  }
+
+  list.sort((a, b) => {
+    if (sortBy === 'rating') return Number(b.rating) - Number(a.rating);
+    if (sortBy === 'year') return Number(b.year) - Number(a.year);
     return a.title.localeCompare(b.title);
   });
 
-  return delay(results);
+  return delay(list);
 }
 
-export async function getFeaturedMovie() {
-  const featured = mockMovies.find((m) => m.featured) || mockMovies[0];
-  return delay(featured);
+/* -------------------------------------------------------------
+ * CREATE, UPDATE, DELETE (CRUD) FOR MOVIES
+ * ----------------------------------------------------------- */
+
+export async function createMovie(movieData) {
+  const movies = getStoredMovies();
+  const newId = Date.now();
+  const newMovie = {
+    id: newId,
+    title: movieData.title.trim(),
+    year: Number(movieData.year),
+    genres: Array.isArray(movieData.genres)
+      ? movieData.genres
+      : movieData.genres.split(',').map((g) => g.trim()).filter(Boolean),
+    rating: Number(movieData.rating) || 7.0,
+    runtime: Number(movieData.runtime) || 120,
+    director: movieData.director.trim(),
+    cast: Array.isArray(movieData.cast)
+      ? movieData.cast
+      : movieData.cast.split(',').map((c) => c.trim()).filter(Boolean),
+    poster:
+      movieData.poster?.trim() ||
+      `https://placehold.co/400x600/151922/E8B44D?font=montserrat&text=${encodeURIComponent(
+        movieData.title
+      )}`,
+    backdrop:
+      movieData.backdrop?.trim() ||
+      `https://placehold.co/1200x500/0B0E14/E8B44D?font=montserrat&text=${encodeURIComponent(
+        movieData.title
+      )}`,
+    synopsis: movieData.synopsis.trim(),
+    featured: Boolean(movieData.featured),
+    custom: true
+  };
+
+  const updated = [newMovie, ...movies];
+  saveStoredMovies(updated);
+  return delay(newMovie);
+}
+
+export async function updateMovie(id, updateData) {
+  const movies = getStoredMovies();
+  const idx = movies.findIndex((m) => String(m.id) === String(id));
+  if (idx === -1) throw new Error('Movie not found');
+
+  const updatedMovie = {
+    ...movies[idx],
+    ...updateData,
+    id: movies[idx].id // keep immutable ID
+  };
+
+  movies[idx] = updatedMovie;
+  saveStoredMovies(movies);
+  return delay(updatedMovie);
+}
+
+export async function deleteMovie(id) {
+  const movies = getStoredMovies();
+  const filtered = movies.filter((m) => String(m.id) !== String(id));
+  saveStoredMovies(filtered);
+
+  // Also clean up associated reviews
+  const reviews = getStoredReviews().filter((r) => String(r.movieId) !== String(id));
+  saveStoredReviews(reviews);
+
+  return delay({ success: true, id });
+}
+
+/* -------------------------------------------------------------
+ * CRUD OPERATIONS FOR REVIEWS
+ * ----------------------------------------------------------- */
+
+export async function getReviewsByMovieId(movieId) {
+  const reviews = getStoredReviews();
+  const filtered = reviews.filter((r) => String(r.movieId) === String(movieId));
+  return delay(filtered);
+}
+
+export async function createReview(movieId, reviewData) {
+  const reviews = getStoredReviews();
+  const newReview = {
+    id: `rev-${Date.now()}`,
+    movieId: Number(movieId),
+    author: reviewData.author.trim(),
+    rating: Number(reviewData.rating),
+    comment: reviewData.comment.trim(),
+    createdAt: new Date().toISOString().split('T')[0]
+  };
+
+  const updated = [newReview, ...reviews];
+  saveStoredReviews(updated);
+  return delay(newReview);
+}
+
+export async function deleteReview(reviewId) {
+  const reviews = getStoredReviews();
+  const filtered = reviews.filter((r) => r.id !== reviewId);
+  saveStoredReviews(filtered);
+  return delay({ success: true, id: reviewId });
+}
+
+/* -------------------------------------------------------------
+ * OPTIONAL EXTERNAL LIVE API SEARCH (e.g. Free OMDB / Fallback)
+ * ----------------------------------------------------------- */
+
+export async function fetchLiveApiMovie(searchTerm) {
+  try {
+    const res = await fetch(`https://www.omdbapi.com/?apikey=trilogy&t=${encodeURIComponent(searchTerm)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.Response === 'False') return null;
+
+    return {
+      title: data.Title,
+      year: parseInt(data.Year, 10) || 2024,
+      director: data.Director !== 'N/A' ? data.Director : 'Unknown',
+      cast: data.Actors !== 'N/A' ? data.Actors.split(', ') : [],
+      genres: data.Genre !== 'N/A' ? data.Genre.split(', ') : ['Cinema'],
+      rating: parseFloat(data.imdbRating) || 7.5,
+      runtime: parseInt(data.Runtime, 10) || 120,
+      synopsis: data.Plot !== 'N/A' ? data.Plot : 'No synopsis available.',
+      poster: data.Poster !== 'N/A' ? data.Poster : ''
+    };
+  } catch (err) {
+    console.warn('Live API request skipped or offline:', err);
+    return null;
+  }
 }

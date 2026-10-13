@@ -21,11 +21,14 @@ export default function Navbar() {
 
         <nav className="nav-links">
           <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
-            Home
+            Catalogue
           </NavLink>
           <NavLink to="/watchlist" className={({ isActive }) => (isActive ? 'active' : '')}>
             Watchlist
             {watchlist.length > 0 && <span className="nav-badge">{watchlist.length}</span>}
+          </NavLink>
+          <NavLink to="/submit-movie" className={({ isActive }) => (isActive ? 'active' : '')}>
+            + Add Movie
           </NavLink>
           <NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>
             About
