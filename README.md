@@ -1,60 +1,76 @@
-# CineFolio — Movie Information Portal
+# CineFolio — Advanced Movie Information Portal
 
-Advanced Web Technologies Mini Project — **Phase I: Design, Planning & Core Implementation**
+**Advanced Web Technologies — Mini Project (Phase I & Phase II Complete)**  
+*Department of MCA, Pimpri Chinchwad College of Engineering (PCCOE), Pune*  
+**Student:** Vikrant Salunkhe (PRN: 125M1H006) | **Guide:** Prof. Dr. Avinash Chormale  
 
-A React.js (ES6+) single-page application for browsing, searching, filtering, and tracking movies.
+A fast, cinema-themed React 18 single-page application for browsing, searching, filtering, reviewing, and tracking movies with persistent storage, full CRUD operations, and live API support.
+
+---
 
 ## Tech Stack
-- React 18 (function components + Hooks)
-- React Router v6 (client-side routing)
-- Context API + `useReducer` (global watchlist state)
-- Vite (build tool / dev server)
-- Plain CSS with a design-token system (no external UI framework)
+- **Core:** React 18 (Function Components, Custom Hooks)
+- **Routing:** React Router v6 (Nested routes, dynamic parameters, code splitting via `React.lazy` + `<Suspense>`)
+- **State Management:** React Context API + `useReducer` (Global Watchlist & Toast Notifications)
+- **Build Tool:** Vite 5
+- **Testing:** Node.js native test runner (`node --test`)
+- **Styling:** Vanilla CSS with custom cinema marquee design tokens (No heavy UI frameworks)
+
+---
+
+## Key Features Implemented (Phase II / FA-2)
+
+1. **Full CRUD Operations:**
+   - **Create:** Add new custom movies via validated form; submit audience reviews with star ratings.
+   - **Read:** Catalogue browsing, live search, movie details, and audience feedback.
+   - **Update:** Manage Watchlist status (`Plan to Watch`, `Watching`, `Completed`) and edit personal notes.
+   - **Delete:** Remove movies from catalogue, delete individual reviews, and manage watchlist items.
+2. **Interactive Forms & Real-time Validation:**
+   - Real-time constraint checking (Title, Year, Rating, Runtime, Synopsis minimum characters).
+   - Touched state tracking with contextual error messages.
+   - Quick Autofill via live external API (OMDb) for automatic metadata fetching.
+3. **Advanced & Custom React Hooks:**
+   - `useDebounce`: Debounces live search input (250ms) to eliminate redundant re-renders.
+   - `useLocalStorage`: State-to-storage synchronization.
+   - `useMemo`: Memoizes paginated movie subsets (8 titles per page).
+   - `useReducer`: Predictable state transitions for watchlist items and notes.
+4. **Resilience & Error Handling:**
+   - React `ErrorBoundary` lifecycle catching rendering errors with graceful cinema recovery UI.
+   - Global Toast Notification system with auto-dismiss timers.
+   - Image fallback handlers for missing/broken poster URLs.
+5. **Automated Testing Suite:**
+   - 8 comprehensive unit tests covering CRUD services, filter/sort logic, and custom hook debounce timers.
+
+---
 
 ## Getting Started
 
+### Installation
 ```bash
 npm install
-npm run dev
 ```
 
-Then open the URL Vite prints (default `http://localhost:5173`).
+### Development Server
+```bash
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
 
-To build for production:
+### Run Automated Tests
+```bash
+npm test
+```
 
+### Production Build
 ```bash
 npm run build
 npm run preview
 ```
 
-## Project Structure
+---
 
-```
-src/
-  components/     Reusable UI pieces (Navbar, Hero, MovieCard, MovieGrid, FilterBar, Footer)
-  pages/          Route-level screens (Home, MovieDetails, Watchlist, About, NotFound)
-  context/        WatchlistContext — global state via Context + useReducer
-  data/           Mock movie dataset (movies.js)
-  services/       movieService.js — data-access layer (swap-ready for a live API)
-  App.jsx         Route definitions
-  main.jsx        App entry point
-```
+## Documentation & Deliverables
 
-## Implemented Modules (Phase I)
-
-1. **Home / Catalogue Browser** — hero banner for a featured title, genre filter chips, sort control, responsive movie grid.
-2. **Search** — live search by title, director, or cast member from the navbar.
-3. **Movie Details** — full detail view: synopsis, cast, genres, rating, runtime, director.
-4. **Watchlist** — add/remove movies, persisted to `localStorage`, badge counter in the navbar.
-5. **Routing** — `/`, `/movie/:id`, `/watchlist`, `/about`, and a 404 fallback, all via React Router.
-6. **About** — project description page.
-
-## Phase II Plan (not yet implemented)
-- Replace the mock dataset in `src/services/movieService.js` with a live API (OMDb/TMDB), guarded behind an `.env` API key.
-- Pagination / infinite scroll for large result sets.
-- User authentication so watchlists sync across devices.
-- Reviews and star-rating submission by users.
-
-## Notes
-Movie posters/backdrops in the mock dataset use placeholder images (`placehold.co`) — swap in real
-artwork or live API images once a provider is connected.
+- **FA-2 Project Report (8–10 pages equivalent):** [`docs/FA2_PROJECT_REPORT.md`](docs/FA2_PROJECT_REPORT.md)
+- **FA-2 Presentation Slides (10 slides + Viva Q&A):** [`docs/FA2_PRESENTATION_SLIDES.md`](docs/FA2_PRESENTATION_SLIDES.md)
+- **GitHub Repository:** [https://github.com/vikrant-salunkhe/cinefolio.git](https://github.com/vikrant-salunkhe/cinefolio.git)
