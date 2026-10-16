@@ -4,12 +4,14 @@ import { getMovieById, deleteMovie } from '../services/movieService.js';
 import { useWatchlist } from '../context/WatchlistContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import ReviewSection from '../components/ReviewSection.jsx';
+import EditMovieModal from '../components/EditMovieModal.jsx';
 
 export default function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [movie, setMovie] = useState(undefined); // undefined = loading, null = not found
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
   useEffect(() => {
@@ -112,6 +114,15 @@ export default function MovieDetails() {
             <button
               type="button"
               className="btn btn-outline"
+              onClick={() => setIsEditModalOpen(true)}
+              title="Edit movie information"
+            >
+              &#9998; Edit Details
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline"
               style={{ borderColor: 'var(--color-ticket-red)', color: 'var(--color-ticket-red)' }}
               onClick={handleDeleteMovie}
               title="Delete movie from database"
@@ -128,6 +139,14 @@ export default function MovieDetails() {
 
       {/* Embedded Audience Reviews Module (CRUD Read, Create, Delete) */}
       <ReviewSection movieId={movie.id} movieTitle={movie.title} />
+
+      {/* Full CRUD Edit Movie Modal */}
+      <EditMovieModal
+        movie={movie}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdated={(updated) => setMovie(updated)}
+      />
     </>
   );
 }

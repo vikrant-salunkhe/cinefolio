@@ -5,6 +5,7 @@ import {
   getMovieById,
   searchMovies,
   createMovie,
+  updateMovie,
   deleteMovie,
   createReview,
   getReviewsByMovieId,
@@ -66,6 +67,30 @@ describe('CineFolio Movie Service - CRUD & Filtering Test Suite', () => {
 
     const afterDelete = await getMovieById(created.id);
     assert.strictEqual(afterDelete, null);
+  });
+
+  it('should update an existing movie details (CRUD Update)', async () => {
+    const movie = await getMovieById(2);
+    assert.ok(movie);
+
+    const originalTitle = movie.title;
+    const updated = await updateMovie(2, {
+      title: 'Paper Lanterns: Remastered',
+      rating: 9.5,
+      genres: 'Drama, Romance, Classic'
+    });
+
+    assert.strictEqual(updated.title, 'Paper Lanterns: Remastered');
+    assert.strictEqual(updated.rating, 9.5);
+    assert.ok(Array.isArray(updated.genres));
+    assert.ok(updated.genres.includes('Classic'));
+
+    // Revert back so other tests aren't affected
+    await updateMovie(2, {
+      title: originalTitle,
+      rating: movie.rating,
+      genres: movie.genres
+    });
   });
 
   it('should create and retrieve reviews for a movie (CRUD Reviews)', async () => {

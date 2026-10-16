@@ -210,10 +210,24 @@ export async function updateMovie(id, updateData) {
   const idx = movies.findIndex((m) => String(m.id) === String(id));
   if (idx === -1) throw new Error('Movie not found');
 
+  const existing = movies[idx];
   const updatedMovie = {
-    ...movies[idx],
+    ...existing,
     ...updateData,
-    id: movies[idx].id // keep immutable ID
+    id: existing.id,
+    year: updateData.year !== undefined ? Number(updateData.year) : existing.year,
+    rating: updateData.rating !== undefined ? Number(updateData.rating) : existing.rating,
+    runtime: updateData.runtime !== undefined ? Number(updateData.runtime) : existing.runtime,
+    genres: updateData.genres !== undefined
+      ? (Array.isArray(updateData.genres)
+          ? updateData.genres
+          : updateData.genres.split(',').map((g) => g.trim()).filter(Boolean))
+      : existing.genres,
+    cast: updateData.cast !== undefined
+      ? (Array.isArray(updateData.cast)
+          ? updateData.cast
+          : updateData.cast.split(',').map((c) => c.trim()).filter(Boolean))
+      : existing.cast
   };
 
   movies[idx] = updatedMovie;
