@@ -47,6 +47,19 @@ export default function MovieDetails() {
     }
   };
 
+  const handleShareMovie = async () => {
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        addToast(`Link to "${movie.title}" copied to clipboard!`, 'info');
+      } else {
+        addToast('Sharing link: ' + window.location.href, 'info');
+      }
+    } catch {
+      addToast('Could not copy link to clipboard', 'error');
+    }
+  };
+
   const handleDeleteMovie = async () => {
     if (!window.confirm(`Are you sure you want to delete "${movie.title}" from the catalogue?`)) {
       return;
@@ -88,9 +101,14 @@ export default function MovieDetails() {
           <div>
             {Array.isArray(movie.genres) &&
               movie.genres.map((g) => (
-                <span key={g} className="genre-tag">
+                <Link
+                  key={g}
+                  to={`/?genre=${encodeURIComponent(g)}`}
+                  className="genre-tag clickable-genre-tag"
+                  title={`Browse other ${g} films`}
+                >
                   {g}
-                </span>
+                </Link>
               ))}
           </div>
 
@@ -109,6 +127,15 @@ export default function MovieDetails() {
               onClick={handleWatchlistToggle}
             >
               {saved ? 'Remove from Watchlist' : '+ Add to Watchlist'}
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={handleShareMovie}
+              title="Copy link to clipboard"
+            >
+              &#128279; Share
             </button>
 
             <button

@@ -1059,3 +1059,27 @@
   }
 }
 
+/* ---------- Genre Tags ---------- */
+.genre-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: rgba(232, 180, 77, 0.12);
+  border: 1px solid rgba(232, 180, 77, 0.3);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.genre-tag.clickable-genre-tag:hover {
+  background: var(--gold);
+  color: #0b0e14;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 180, 77, 0.25);
+}
+
+

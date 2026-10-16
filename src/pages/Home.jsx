@@ -11,6 +11,7 @@ const ITEMS_PER_PAGE = 8;
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
+  const urlGenre = searchParams.get('genre') || 'All';
 
   const [featured, setFeatured] = useState(null);
   const [movies, setMovies] = useState([]);
@@ -20,17 +21,21 @@ export default function Home() {
   const [searchInput, setSearchInput] = useState(urlQuery);
   const debouncedSearch = useDebounce(searchInput, 250);
 
-  const [genre, setGenre] = useState('All');
+  const [genre, setGenre] = useState(urlGenre);
   const [sortBy, setSortBy] = useState('title');
   const [minRating, setMinRating] = useState(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Sync urlQuery when user navigates or types in nav
+  // Sync urlQuery & urlGenre when user navigates or types in nav
   useEffect(() => {
     setSearchInput(urlQuery);
   }, [urlQuery]);
+
+  useEffect(() => {
+    setGenre(urlGenre);
+  }, [urlGenre]);
 
   useEffect(() => {
     getFeaturedMovie().then(setFeatured);
@@ -58,23 +63,35 @@ export default function Home() {
     return movies.slice(start, start + ITEMS_PER_PAGE);
   }, [movies, currentPage]);
 
+  const updateUrlParams = (newQ, newGenre) => {
+    const params = {};
+    const qVal = newQ !== undefined ? newQ : searchInput;
+    const gVal = newGenre !== undefined ? newGenre : genre;
+
+    if (qVal && qVal.trim()) params.q = qVal.trim();
+    if (gVal && gVal !== 'All') params.genre = gVal;
+
+    setSearchParams(params);
+  };
+
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchInput(val);
-    if (val.trim()) {
-      setSearchParams({ q: val });
-    } else {
-      setSearchParams({});
-    }
+    updateUrlParams(val, genre);
+  };
+
+  const handleGenreChange = (newGenre) => {
+    setGenre(newGenre);
+    updateUrlParams(searchInput, newGenre);
   };
 
   const handleClearFilters = () => {
     setSearchInput('');
-    setSearchParams({});
     setGenre('All');
     setSortBy('title');
     setMinRating(0);
     setCurrentPage(1);
+    setSearchParams({});
   };
 
   return (
@@ -116,7 +133,7 @@ export default function Home() {
 
       <FilterBar
         activeGenre={genre}
-        onGenreChange={setGenre}
+        onGenreChange={handleGenreChange}
         sortBy={sortBy}
         onSortChange={setSortBy}
         minRating={minRating}
