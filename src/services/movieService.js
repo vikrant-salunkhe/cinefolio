@@ -251,6 +251,11 @@ export async function deleteMovie(id) {
  * CRUD OPERATIONS FOR REVIEWS
  * ----------------------------------------------------------- */
 
+export async function getAllReviews() {
+  const reviews = getStoredReviews();
+  return delay(reviews);
+}
+
 export async function getReviewsByMovieId(movieId) {
   const reviews = getStoredReviews();
   const filtered = reviews.filter((r) => String(r.movieId) === String(movieId));

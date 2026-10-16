@@ -8,6 +8,7 @@ import {
   updateMovie,
   deleteMovie,
   createReview,
+  getAllReviews,
   getReviewsByMovieId,
   deleteReview
 } from './movieService.js';
@@ -112,5 +113,12 @@ describe('CineFolio Movie Service - CRUD & Filtering Test Suite', () => {
     await deleteReview(review.id);
     const updatedReviews = await getReviewsByMovieId(1);
     assert.ok(!updatedReviews.some((r) => r.id === review.id));
+  });
+
+  it('should fetch all audience reviews for insights analytics', async () => {
+    const allReviews = await getAllReviews();
+    assert.ok(Array.isArray(allReviews));
+    assert.ok(allReviews.length > 0, 'Initial reviews should be populated');
+    assert.ok(allReviews.some((r) => r.author === 'Aarav Sharma'));
   });
 });

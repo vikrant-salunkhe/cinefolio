@@ -30,6 +30,9 @@ export default function Navbar() {
           <NavLink to="/submit-movie" className={({ isActive }) => (isActive ? 'active' : '')}>
             + Add Movie
           </NavLink>
+          <NavLink to="/insights" className={({ isActive }) => (isActive ? 'active' : '')}>
+            Insights
+          </NavLink>
           <NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>
             About
           </NavLink>

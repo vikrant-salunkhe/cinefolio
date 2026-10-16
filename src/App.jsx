@@ -12,6 +12,7 @@ const Home = lazy(() => import('./pages/Home.jsx'));
 const MovieDetails = lazy(() => import('./pages/MovieDetails.jsx'));
 const Watchlist = lazy(() => import('./pages/Watchlist.jsx'));
 const SubmitMovie = lazy(() => import('./pages/SubmitMovie.jsx'));
+const Insights = lazy(() => import('./pages/Insights.jsx'));
 const About = lazy(() => import('./pages/About.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
@@ -39,6 +40,7 @@ export default function App() {
                 <Route path="/movie/:id" element={<MovieDetails />} />
                 <Route path="/watchlist" element={<Watchlist />} />
                 <Route path="/submit-movie" element={<SubmitMovie />} />
+                <Route path="/insights" element={<Insights />} />
                 <Route path="/about" element={<About />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
