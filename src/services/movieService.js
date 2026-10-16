@@ -312,3 +312,55 @@ export async function fetchLiveApiMovie(searchTerm) {
     return null;
   }
 }
+
+/* -------------------------------------------------------------
+ * DATA MANAGEMENT (EXPORT, IMPORT, RESET)
+ * ----------------------------------------------------------- */
+
+export async function exportDataBackup() {
+  const movies = getStoredMovies();
+  const reviews = getStoredReviews();
+  const backup = {
+    app: 'CineFolio',
+    version: '2.0.0',
+    exportedAt: new Date().toISOString(),
+    moviesCount: movies.length,
+    reviewsCount: reviews.length,
+    data: {
+      movies,
+      reviews
+    }
+  };
+  return delay(backup);
+}
+
+export async function importDataBackup(backupPayload) {
+  if (!backupPayload || typeof backupPayload !== 'object') {
+    throw new Error('Invalid backup format');
+  }
+
+  const movies = backupPayload.data?.movies || backupPayload.movies;
+  if (!Array.isArray(movies) || movies.length === 0) {
+    throw new Error('Backup must contain a non-empty movies array');
+  }
+
+  saveStoredMovies(movies);
+
+  const reviews = backupPayload.data?.reviews || backupPayload.reviews;
+  if (Array.isArray(reviews)) {
+    saveStoredReviews(reviews);
+  }
+
+  return delay({
+    success: true,
+    moviesCount: movies.length,
+    reviewsCount: Array.isArray(reviews) ? reviews.length : 0
+  });
+}
+
+export async function resetToDefaults() {
+  saveStoredMovies([...initialMovies]);
+  saveStoredReviews([...INITIAL_REVIEWS]);
+  return delay({ success: true });
+}
+

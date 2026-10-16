@@ -10,7 +10,10 @@ import {
   createReview,
   getAllReviews,
   getReviewsByMovieId,
-  deleteReview
+  deleteReview,
+  exportDataBackup,
+  importDataBackup,
+  resetToDefaults
 } from './movieService.js';
 
 describe('CineFolio Movie Service - CRUD & Filtering Test Suite', () => {
@@ -120,5 +123,54 @@ describe('CineFolio Movie Service - CRUD & Filtering Test Suite', () => {
     assert.ok(Array.isArray(allReviews));
     assert.ok(allReviews.length > 0, 'Initial reviews should be populated');
     assert.ok(allReviews.some((r) => r.author === 'Aarav Sharma'));
+  });
+
+  it('should export a valid data backup payload', async () => {
+    const backup = await exportDataBackup();
+    assert.ok(backup.app === 'CineFolio');
+    assert.ok(backup.version);
+    assert.ok(Array.isArray(backup.data.movies));
+    assert.ok(Array.isArray(backup.data.reviews));
+    assert.ok(backup.moviesCount > 0);
+  });
+
+  it('should import and validate a backup payload and reset to defaults', async () => {
+    const mockBackup = {
+      app: 'CineFolio',
+      version: '2.0.0',
+      data: {
+        movies: [
+          {
+            id: 9999,
+            title: 'Imported Backup Movie',
+            year: 2025,
+            genres: ['Sci-Fi'],
+            rating: 9.0,
+            runtime: 100,
+            director: 'Backup Director',
+            synopsis: 'A movie restored from a JSON backup file.'
+          }
+        ],
+        reviews: []
+      }
+    };
+
+    const importRes = await importDataBackup(mockBackup);
+    assert.strictEqual(importRes.success, true);
+    assert.strictEqual(importRes.moviesCount, 1);
+
+    const found = await getMovieById(9999);
+    assert.ok(found);
+    assert.strictEqual(found.title, 'Imported Backup Movie');
+
+    // Reset to defaults
+    const resetRes = await resetToDefaults();
+    assert.strictEqual(resetRes.success, true);
+
+    const afterReset = await getMovieById(9999);
+    assert.strictEqual(afterReset, null);
+
+    const originalTitles = await getAllMovies();
+    assert.ok(originalTitles.length >= 10);
   });
 });
